@@ -1,7 +1,7 @@
 %% Interface graphique d'adaptation d'impédance
 % @file impedance_gui.m
 % @brief Interface permettant de saisir les paramètres et visualiser les résultats
-% @author adminnbb
+% @author nathanael blavo ballarin
 
 % @brief Crée et affiche l'interface graphique principale
 function impedance_gui()

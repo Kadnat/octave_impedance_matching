@@ -10,17 +10,16 @@
 % @param z0 Impédance caractéristique (Ω)
 % @param frequency Fréquence de travail (Hz)
 function impedance_matching(source_impedance, load_impedance, z0, frequency)
-    % Single circuit mode only
     printf("\nSingle Circuit:\n");
     printf("Zs: %s\tZt: %s\n", format_complex(source_impedance), format_complex(load_impedance));
 
-    % Calculate matching networks
+    % Calculer les réseaux correspondants
     networks = match_network(source_impedance, load_impedance, frequency);
 
     % Create figure for this circuit
     figure(1, 'Position', [100 100 800 600]);
 
-    % Plot results
+    % Résultats du tracé
     subplot_idx = 1;
     if isfield(networks, "Normal")
         printf("Network Type: Normal\n");
@@ -35,7 +34,7 @@ function impedance_matching(source_impedance, load_impedance, z0, frequency)
             plot_on_smith([source_impedance, middle, end_point], z0);
             add_component_labels(normal_nets{j,1}, normal_nets{j,2});
 
-            % Add normalized impedance labels under plot
+            % Ajouter des étiquettes d'impédance normalisée sous le tracé
             normalized_source = source_impedance/z0;
             normalized_load = load_impedance/z0;
             text(-1.1, -1.5, sprintf('Zs = %.1f%+.1fi Ω\nZs_norm = %.2f%+.2fi', ...
@@ -64,7 +63,7 @@ function impedance_matching(source_impedance, load_impedance, z0, frequency)
             plot_on_smith([source_impedance, middle, end_point], z0);
             add_component_labels(rev_nets{j,1}, rev_nets{j,2});
 
-            % Add normalized impedance labels under plot
+            % Ajouter des étiquettes d'impédance normalisée sous le tracé
             normalized_source = source_impedance/z0;
             normalized_load = load_impedance/z0;
             text(-1.8, -1.9, sprintf('Zs = %.1f%+.1fi Ω\nZs_norm = %.2f%+.2fi', ...
@@ -80,7 +79,7 @@ function impedance_matching(source_impedance, load_impedance, z0, frequency)
         end
     end
 
-    % Add Export and Restart buttons to the Smith chart figure
+    % Ajouter un bouton d'exportation à la figure de l'abaque de Smith
     uicontrol('Style','pushbutton','String','Export PNG','Position',[10 10 80 30], ...
         'Callback', @(~,~) exportHighRes());
 
@@ -89,7 +88,7 @@ function impedance_matching(source_impedance, load_impedance, z0, frequency)
             % Try high-res print first
             print(gcf, 'smith_plot.png', '-dpng', '-r300', '-opengl');
         catch
-            % Fallback to standard save if print fails
+            % Retour à l'enregistrement standard en cas d'échec de l'impression
             saveas(gcf, 'smith_plot.png');
         end
         printf("Figure saved as 'smith_plot.png'\n");
