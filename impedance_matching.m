@@ -11,7 +11,7 @@
 % @param frequency Fréquence de travail (Hz)
 function impedance_matching(source_impedance, load_impedance, z0, frequency)
     printf("\nSingle Circuit:\n");
-    printf("Zs: %s\tZt: %s\n", format_complex(source_impedance), format_complex(load_impedance));
+    printf("Zs: %s\tZL: %s\n", format_complex(source_impedance), format_complex(load_impedance));
 
     % Calculer les réseaux correspondants
     networks = match_network(source_impedance, load_impedance, frequency);
@@ -34,10 +34,11 @@ function impedance_matching(source_impedance, load_impedance, z0, frequency)
             plot_on_smith([source_impedance, middle, end_point], z0);
             add_component_labels(normal_nets{j,1}, normal_nets{j,2});
 
+
             % Ajouter des étiquettes d'impédance normalisée sous le tracé
             normalized_source = source_impedance/z0;
             normalized_load = load_impedance/z0;
-            text(-1.1, -1.5, sprintf('Zs = %.1f%+.1fi Ω\nZs_norm = %.2f%+.2fi', ...
+            text(-1.1, -1.5, sprintf('ZL = %.1f%+.1fi Ω\nZL_norm = %.2f%+.2fi', ...
                 real(source_impedance), imag(source_impedance), ...
                 real(normalized_source), imag(normalized_source)), ...
                 'FontSize', 8, 'Color', 'k');
@@ -70,7 +71,7 @@ function impedance_matching(source_impedance, load_impedance, z0, frequency)
                 real(source_impedance), imag(source_impedance), ...
                 real(normalized_source), imag(normalized_source)), ...
                 'FontSize', 8, 'Color', 'k');
-            text(0.8, -1.9, sprintf('Zt = %.1f%+.1fi Ω\nZt_norm = %.2f%+.2fi', ...
+            text(0.8, -1.9, sprintf('ZL = %.1f%+.1fi Ω\nZL_norm = %.2f%+.2fi', ...
                 real(load_impedance), imag(load_impedance), ...
                 real(normalized_load), imag(normalized_load)), ...
                 'FontSize', 8, 'Color', 'k');
@@ -463,4 +464,3 @@ function value = reformat_value(original, exponent)
     end
     value = formatted;
 end
-

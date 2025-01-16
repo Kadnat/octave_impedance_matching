@@ -16,9 +16,6 @@ function impedance_gui()
     uicontrol(fig,'Style','text','String','Z0 (Ω):','Position',[10 100 70 20]);
     z0Field = uicontrol(fig,'Style','edit','Position',[80 100 100 20]);
 
-    uicontrol(fig,'Style','text','String','ZLoad (Ω):','Position',[10 70 70 20]);
-    zloadField = uicontrol(fig,'Style','edit','Position',[80 70 100 20]);
-
     uicontrol(fig,'Style','text','String','Freq (prefixed):','Position',[10 40 90 20]);
     freqField = uicontrol(fig,'Style','edit','Position',[100 40 100 20]);
 
@@ -30,11 +27,12 @@ function impedance_gui()
         rVal = str2double(get(realField,'String'));
         iVal = str2double(get(imagField,'String'));
         z0Val = parseSIprefix(get(z0Field,'String'));
-        zLoad = parseSIprefix(get(zloadField,'String'));
         freqVal = parseSIprefix(get(freqField,'String'));
 
+
         close(fig);
-        zSource = rVal + 1i*iVal;
+        zLoad = rVal + 1i*iVal;
+        zSource = 50;
         impedance_matching(zSource, zLoad, z0Val, freqVal);
     end
 end
