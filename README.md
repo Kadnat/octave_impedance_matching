@@ -35,10 +35,10 @@ impedance_gui
 ```
 
 2. Entrez les paramètres :
-   - Real(Z) : Partie réelle de l'impédance source
-   - Imag(Z) : Partie imaginaire de l'impédance source
+   - Real(Z) : Partie réelle de l'impédance de charge
+   - Imag(Z) : Partie imaginaire de l'impédance de charge
    - Z0 : Impédance caractéristique (typiquement 50Ω)
-   - ZLoad : Impédance de charge
+
    - Freq : Fréquence de travail (avec préfixe SI optionnel)
 
 3. Cliquez sur "Calculer" pour voir les résultats
