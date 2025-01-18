@@ -142,6 +142,12 @@ function networks = match_network(source_impedance, load_impedance, frequency)
     Rs = real(source_impedance);
     Rl = real(load_impedance);
 
+    % Cas Rs = Rl : parties réelles égales
+    if abs(Rs - Rl) < 1e-10
+        networks.Equal = calculate_equal_case(source_impedance, load_impedance, frequency);
+        return;
+    end
+
     % Cas où Rs > Rl : réseau normal possible
     if Rs > Rl
         % Vérifie la condition de faisabilité
@@ -166,6 +172,31 @@ function networks = match_network(source_impedance, load_impedance, frequency)
             networks.Reversed = calculate_reversed(source_impedance, load_impedance, frequency);
         end
     end
+end
+
+% @brief Calcule le réseau pour le cas où les parties réelles sont égales
+% @param source Impédance source complexe
+% @param load Impédance de charge complexe
+% @param frequency Fréquence de travail
+% @return Structure contenant l'impédance et les valeurs des composants
+function network = calculate_equal_case(source, load, frequency)
+    network = struct();
+    
+    % Calcul de l'impédance X2 = -(Xl + Xs)
+    x2 = -(imag(load) + imag(source));
+    network.Impedance = x2;
+    
+    % Calcul des valeurs de composants
+    xs = calculate_component_value(frequency, x2);
+    if xs{2} ~= 0
+        xs{1} = [xs{1} ' series'];
+    else
+        xs{1} = '';
+        xs{2} = 0;
+        xs{3} = 'Short';
+    end
+    
+    network.Values = {xs};
 end
 
 %% Fonctions d'affichage
