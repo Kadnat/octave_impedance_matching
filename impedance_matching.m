@@ -10,70 +10,87 @@
 % @param z0 Impédance caractéristique (Ω)
 % @param frequency Fréquence de travail (Hz)
 function impedance_matching(source_impedance, load_impedance, z0, frequency)
-    % Print header line
-    printf("\nZs: %s\tZload: %s\n", format_complex(source_impedance), format_complex(load_impedance));
+    network_count = 1;
 
-    % Calculate matching networks
+    % Affiche l'en-tête
+    printf("\nSource: %s\nLoad: %s\n\n", format_complex(source_impedance), format_complex(load_impedance));
+
+    % Calcul des réseaux correspondants
     networks = match_network(source_impedance, load_impedance, frequency);
 
-    % Display results for equal case
+    % Affiche les réseaux de cas égaux
     if isfield(networks, "Equal")
-        printf("Network Type: Equal\n");
+        printf("L-Network %d:\n", network_count);
         equal_net = networks.Equal.Values;
-        comp = equal_net{1};  % Get the single component
-        if ~isempty(comp)
-            printf("%s: %7s\n", format_component_type(comp), format_component_value(comp));
+        for comp = equal_net
+            printf("  %s\n", format_component_full(comp{1}));
         end
+        network_count++;
     end
 
-    % Display results for normal networks
+    % Affiche les réseaux normaux
     if isfield(networks, "Normal")
-        printf("Network Type: Normal\n");
         normal_nets = networks.Normal.Values;
-        
-        for j = 1:size(normal_nets, 1)
-            comp1 = normal_nets{j,1};
-            comp2 = normal_nets{j,2};
-            printf("%s: %7s | %s: %7s\n", ...
-                format_component_type(comp1), format_component_value(comp1), ...
-                format_component_type(comp2), format_component_value(comp2));
+        for i = 1:size(normal_nets, 1)
+            printf("L-Network %d:\n", network_count);
+            printf("  %s\n", format_component_full(normal_nets{i,1}));
+            printf("  %s\n", format_component_full(normal_nets{i,2}));
+            network_count++;
         end
     end
 
-    % Display results for reversed networks
+    % Affiche les réseaux inversés
     if isfield(networks, "Reversed")
-        printf("Network Type: Reversed\n");
         rev_nets = networks.Reversed.Values;
-        
-        for j = 1:size(rev_nets, 1)
-            comp1 = rev_nets{j,1};
-            comp2 = rev_nets{j,2};
-            printf("%s: %7s | %s: %7s\n", ...
-                format_component_type(comp1), format_component_value(comp1), ...
-                format_component_type(comp2), format_component_value(comp2));
+        for i = 1:size(rev_nets, 1)
+            printf("L-Network %d:\n", network_count);
+            printf("  %s\n", format_component_full(rev_nets{i,1}));
+            printf("  %s\n", format_component_full(rev_nets{i,2}));
+            network_count++;
         end
     end
-    
-    printf("-----------------------------------------------------------------\n\n");
+
+    printf("\n");
 end
 
-% New helper functions for formatting
-function str = format_component_type(comp)
-    if isempty(comp{1})
-        str = '';
-    else
-        str = sprintf("%s%s", comp{1}(1), lower(comp{1}(end)));
+% @brief Formate un composant électronique pour l'affichage
+% @details Cette fonction prend un composant (inductance ou condensateur) et
+%          génère une chaîne de caractères formatée incluant:
+%          - Le type de composant (L ou C)
+%          - Sa topologie (série ou parallèle)
+%          - Sa valeur avec son unité
+%
+% @param comp Cellule contenant:
+%             - comp{1}: Type et topologie (ex: "Inductance series")
+%             - comp{2}: Valeur numérique
+%             - comp{3}: Unité (ex: "nH", "pF")
+% @return str Chaîne formatée (ex: "L série: 2.5nH")
+% @example
+%   comp = {'Inductance series', 2.5, 'nH'}
+%   str = format_component_full(comp)
+%   % Retourne: "L série: 2.5nH"
+function str = format_component_full(comp)
+    % Cas spécial: composant vide ou court-circuit
+    if isempty(comp{1}) || comp{2} == 0
+        str = "Court-circuit";
+        return;
     end
-end
 
-function str = format_component_value(comp)
-    if comp{2} == 0
-        str = "Short";
+    % Extrait la première lettre pour identifier le type (L/C)
+    type = comp{1}(1);
+
+    % Détermine la topologie (série/parallèle)
+    if ~isempty(strfind(lower(comp{1}), "series"))
+        topology = "série";
     else
-        val = comp{2};
-        unit = comp{3};
-        str = sprintf("%.3g%s", val, unit);
+        topology = "parallèle";
     end
+
+    % Formate la valeur avec son unité
+    value = sprintf("%.3g%s", comp{2}, comp{3});
+
+    % Combine les éléments dans la chaîne finale
+    str = sprintf("%s %s: %s", type, topology, value);
 end
 
 %% Fonctions de conversion et formatage
@@ -154,19 +171,32 @@ function networks = match_network(source_impedance, load_impedance, frequency)
 end
 
 % @brief Calcule le réseau pour le cas où les parties réelles sont égales
-% @param source Impédance source complexe
-% @param load Impédance de charge complexe
-% @param frequency Fréquence de travail
-% @return Structure contenant l'impédance et les valeurs des composants
+% @details Cette fonction calcule le réseau d'adaptation pour le cas spécial
+%          où les parties réelles des impédances source et charge sont égales.
+%          Dans ce cas, un seul composant réactif en série est nécessaire.
+%
+% @param source Impédance source complexe sous la forme R + jX (Ω)
+% @param load Impédance de charge complexe sous la forme R + jX (Ω)
+% @param frequency Fréquence de travail en Hz
+% @return Structure contenant:
+%         - Impedance: Valeur de la réactance nécessaire
+%         - Values: Cellule contenant les composants {type, valeur, unité}
 function network = calculate_equal_case(source, load, frequency)
     network = struct();
-    
-    % Calcul de l'impédance X2 = -(Xl + Xs)
+
+    % Quand real(Zs) = real(Zl), on peut annuler les parties imaginaires
+    % avec un seul composant réactif de valeur opposée à leur somme
     x2 = -(imag(load) + imag(source));
     network.Impedance = x2;
-    
-    % Calcul des valeurs de composants
+
+    % Détermine le type de composant (L ou C) et calcule sa valeur
+    % En fonction du signe de x2:
+    % - Si x2 > 0: inductance série
+    % - Si x2 < 0: condensateur série
     xs = calculate_component_value(frequency, x2);
+
+    % Ajoute l'indication 'series' au type de composant
+    % Si x2 = 0, court-circuit (cas où les impédances sont conjuguées)
     if xs{2} ~= 0
         xs{1} = [xs{1} ' series'];
     else
@@ -174,28 +204,9 @@ function network = calculate_equal_case(source, load, frequency)
         xs{2} = 0;
         xs{3} = 'Short';
     end
-    
-    network.Values = {xs};
-end
 
-%% Fonctions de calcul géométrique
-% @brief Calcule le point suivant sur l'abaque selon le type de connexion
-% @param start Point de départ (impédance complexe)
-% @param impedance Impédance à ajouter
-% @param is_parallel true si connexion parallèle, false si série
-% @return Nouvelle impédance complexe
-function point = calculate_point(start, impedance, is_parallel)
-    if is_parallel
-        start_admittance = 1/start;
-        admittance = 1/impedance;
-        point = 1/(start_admittance + admittance);
-    else
-        if impedance != 0
-            point = start + impedance;
-        else
-            point = complex(real(start), -imag(start));
-        end
-    end
+    % Stocke le composant calculé dans la structure de retour
+    network.Values = {xs};
 end
 
 %% Fonctions de calcul des composants
@@ -388,24 +399,42 @@ function prefix = get_prefix(exponent)
     prefix = prefixes{idx};
 end
 
-% @brief Reformate une valeur selon son exposant
-% @param original Valeur originale
-% @param exponent Exposant en base 10
-% @return Valeur reformatée
+% @brief Reformate une valeur selon son exposant pour affichage
+% @details Cette fonction ajuste la précision d'affichage d'une valeur numérique
+%          en fonction de son ordre de grandeur (exposant). Elle permet d'obtenir
+%          une représentation cohérente des valeurs de composants électroniques.
+%
+% @param original Valeur originale à reformater
+% @param exponent Exposant en base 10 de la valeur
+% @return Valeur reformatée avec la précision appropriée
+%
+% @example Pour 1234 avec exposant 3:
+%          reformat_value(1234, 3) retourne 1.23
 function value = reformat_value(original, exponent)
+    % Calcul des points décimaux selon l'exposant
+    % Pour garder 2-3 chiffres significatifs
     decimal_points = 2 - mod(exponent, 3);
+
+    % Ajustement de l'exposant au multiple de 3 inférieur
+    % Ex: 6 devient 3, -5 devient -6
     exp = exponent - mod(exponent, 3);
 
+    % Formatage selon le signe de l'exposant
     if exponent > 0
+        % Cas des grands nombres: divise par 10^exp
         formatted = fix(original / (10^exp) * 10^decimal_points) / 10^decimal_points;
     elseif exponent < 0
+        % Cas des petits nombres: multiplie par 10^|exp|
         formatted = fix(original * 10^abs(exp) * 10^decimal_points) / 10^decimal_points;
     else
+        % Cas où exposant = 0
         formatted = fix(original * 10^decimal_points) / 10^decimal_points;
     end
 
+    % Suppression des décimales si non nécessaires
     if decimal_points == 0
         formatted = fix(formatted);
     end
+
     value = formatted;
 end
