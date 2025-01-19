@@ -10,91 +10,70 @@
 % @param z0 Impédance caractéristique (Ω)
 % @param frequency Fréquence de travail (Hz)
 function impedance_matching(source_impedance, load_impedance, z0, frequency)
-    printf("\nSingle Circuit:\n");
-    printf("Zs: %s\tZL: %s\n", format_complex(source_impedance), format_complex(load_impedance));
+    % Print header line
+    printf("\nZs: %s\tZload: %s\n", format_complex(source_impedance), format_complex(load_impedance));
 
-    % Calculer les réseaux correspondants
+    % Calculate matching networks
     networks = match_network(source_impedance, load_impedance, frequency);
 
-    % Create figure for this circuit
-    figure(1, 'Position', [100 100 800 600]);
+    % Display results for equal case
+    if isfield(networks, "Equal")
+        printf("Network Type: Equal\n");
+        equal_net = networks.Equal.Values;
+        comp = equal_net{1};  % Get the single component
+        if ~isempty(comp)
+            printf("%s: %7s\n", format_component_type(comp), format_component_value(comp));
+        end
+    end
 
-    % Résultats du tracé
-    subplot_idx = 1;
+    % Display results for normal networks
     if isfield(networks, "Normal")
         printf("Network Type: Normal\n");
         normal_nets = networks.Normal.Values;
-        normal_imp = networks.Normal.Impedance;
-
-        for j = 1:size(normal_imp, 1)
-            subplot(2, 2, subplot_idx);
-            middle = calculate_point(source_impedance, complex(0, normal_imp(j,1)), true);
-            end_point = calculate_point(middle, complex(0, normal_imp(j,2)), false);
-            draw_smith_chart(z0);
-            plot_on_smith([source_impedance, middle, end_point], z0);
-            add_component_labels(normal_nets{j,1}, normal_nets{j,2});
-
-
-            % Ajouter des étiquettes d'impédance normalisée sous le tracé
-            normalized_source = source_impedance/z0;
-            normalized_load = load_impedance/z0;
-            text(-1.1, -1.5, sprintf('ZL = %.1f%+.1fi Ω\nZL_norm = %.2f%+.2fi', ...
-                real(load_impedance), imag(load_impedance), ...
-                real(normalized_load), imag(normalized_load)), ...
-                'FontSize', 8, 'Color', 'k');
-            text(0.2, -1.5, sprintf('Zt = %.1f%+.1fi Ω\nZt_norm = %.2f%+.2fi', ...
-                real(source_impedance), imag(source_impedance), ...
-                real(normalized_source), imag(normalized_source)), ...
-                'FontSize', 8, 'Color', 'k');
-
-            subplot_idx = subplot_idx + 1;
+        
+        for j = 1:size(normal_nets, 1)
+            comp1 = normal_nets{j,1};
+            comp2 = normal_nets{j,2};
+            printf("%s: %7s | %s: %7s\n", ...
+                format_component_type(comp1), format_component_value(comp1), ...
+                format_component_type(comp2), format_component_value(comp2));
         end
     end
 
+    % Display results for reversed networks
     if isfield(networks, "Reversed")
         printf("Network Type: Reversed\n");
         rev_nets = networks.Reversed.Values;
-        rev_imp = networks.Reversed.Impedance;
-
-        for j = 1:size(rev_imp, 1)
-            subplot(2, 2, subplot_idx);
-            middle = calculate_point(source_impedance, complex(0, rev_imp(j,2)), false);
-            end_point = calculate_point(middle, complex(0, rev_imp(j,1)), true);
-            draw_smith_chart(z0);
-            plot_on_smith([source_impedance, middle, end_point], z0);
-            add_component_labels(rev_nets{j,1}, rev_nets{j,2});
-
-            % Ajouter des étiquettes d'impédance normalisée sous le tracé
-            normalized_source = source_impedance/z0;
-            normalized_load = load_impedance/z0;
-            text(-1.8, -1.9, sprintf('Zs = %.1f%+.1fi Ω\nZs_norm = %.2f%+.2fi', ...
-                real(source_impedance), imag(source_impedance), ...
-                real(normalized_source), imag(normalized_source)), ...
-                'FontSize', 8, 'Color', 'k');
-            text(0.8, -1.9, sprintf('ZL = %.1f%+.1fi Ω\nZL_norm = %.2f%+.2fi', ...
-                real(load_impedance), imag(load_impedance), ...
-                real(normalized_load), imag(normalized_load)), ...
-                'FontSize', 8, 'Color', 'k');
-
-            subplot_idx = subplot_idx + 1;
+        
+        for j = 1:size(rev_nets, 1)
+            comp1 = rev_nets{j,1};
+            comp2 = rev_nets{j,2};
+            printf("%s: %7s | %s: %7s\n", ...
+                format_component_type(comp1), format_component_value(comp1), ...
+                format_component_type(comp2), format_component_value(comp2));
         end
     end
+    
+    printf("-----------------------------------------------------------------\n\n");
+end
 
-    % Ajouter un bouton d'exportation à la figure de l'abaque de Smith
-    uicontrol('Style','pushbutton','String','Export PNG','Position',[10 10 80 30], ...
-        'Callback', @(~,~) exportHighRes());
-
-    function exportHighRes()
-        try
-            % Try high-res print first
-            print(gcf, 'smith_plot.png', '-dpng', '-r300', '-opengl');
-        catch
-            % Retour à l'enregistrement standard en cas d'échec de l'impression
-            saveas(gcf, 'smith_plot.png');
-        end
-        printf("Figure saved as 'smith_plot.png'\n");
+% New helper functions for formatting
+function str = format_component_type(comp)
+    if isempty(comp{1})
+        str = '';
+    else
+        str = sprintf("%s%s", comp{1}(1), lower(comp{1}(end)));
     end
+end
 
+function str = format_component_value(comp)
+    if comp{2} == 0
+        str = "Short";
+    else
+        val = comp{2};
+        unit = comp{3};
+        str = sprintf("%.3g%s", val, unit);
+    end
 end
 
 %% Fonctions de conversion et formatage
@@ -197,59 +176,6 @@ function network = calculate_equal_case(source, load, frequency)
     end
     
     network.Values = {xs};
-end
-
-%% Fonctions d'affichage
-% @brief Dessine l'abaque de Smith
-% @param z0 Impédance caractéristique de référence
-function draw_smith_chart(z0)
-    hold on;
-    axis equal;
-    grid off;
-
-    % Draw unit circle
-    theta = linspace(0, 2*pi, 100);
-    plot(cos(theta), sin(theta), 'k-');
-
-    % Draw real axis
-    plot([-1, 1], [0, 0], 'k-');
-
-    % Add labels
-    title(sprintf("Smith Chart (Z0 = %d Ω)", z0));
-    axis([-1.2 1.2 -1.2 1.2]);
-end
-
-% @brief Trace des points et leurs connexions sur l'abaque
-% @param points Tableau des impédances complexes à tracer
-% @param z0 Impédance caractéristique de référence
-function plot_on_smith(points, z0)
-    hold on;
-
-    % Conversion des impédances en coefficients de réflexion
-    gammas = zeros(size(points));
-    normalized_points = points./z0;  % Normalisation des impédances
-    for i = 1:length(points)
-        gammas(i) = impedance_to_gamma(points(i), z0);
-    end
-
-    % Tracé des connexions
-    plot(real(gammas), imag(gammas), 'b-', 'LineWidth', 1.5);
-
-    % Tracé de tous les points avec marqueurs différents
-    plot(real(gammas(1)), imag(gammas(1)), 'rx', 'MarkerSize', 5);
-    if length(gammas) > 2
-        plot(real(gammas(2)), imag(gammas(2)), 'bs', 'MarkerSize', 5);
-    end
-    plot(real(gammas(end)), imag(gammas(end)), 'go', 'MarkerSize', 5);
-
-    % Ajout des étiquettes avec valeurs normalisées
-    offsets = [-0.1 0.1; 0.1 0.1; 0.1 -0.1];  % Décalages pour les étiquettes
-
-    for i = 1:length(gammas)
-        text(real(gammas(i)) + offsets(i,1), imag(gammas(i)) + offsets(i,2), ...
-             sprintf('%.2f%+.2fi', real(normalized_points(i)), imag(normalized_points(i))), ...
-             'FontSize', 8);
-    end
 end
 
 %% Fonctions de calcul géométrique
@@ -460,18 +386,6 @@ function prefix = get_prefix(exponent)
     idx = max(1, min(length(prefixes), idx));
 
     prefix = prefixes{idx};
-end
-
-% @brief Ajoute les étiquettes des composants sur le graphique
-% @param comp1 Premier composant {type, valeur, unité}
-% @param comp2 Second composant {type, valeur, unité}
-function add_component_labels(comp1, comp2)
-    if iscell(comp1) && iscell(comp2)
-        label = sprintf('[1] %s: %g %s\n[2] %s: %g %s', ...
-                       comp1{1}, comp1{2}, comp1{3}, ...
-                       comp2{1}, comp2{2}, comp2{3});
-        text(-1.1, 1.1, label, 'FontSize', 10);
-    end
 end
 
 % @brief Reformate une valeur selon son exposant
