@@ -5,28 +5,30 @@
 
 % @brief Crée et affiche l'interface graphique principale
 function impedance_gui()
-    fig = figure('Name','Impedance Matching GUI','NumberTitle','off','Position',[100 100 300 250]);
+    % Create main figure with wider width (400 instead of 300)
+    fig = figure('Name', 'Impedance Matching GUI', 'NumberTitle', 'off', 'Position', [100 100 400 250]);
 
-    uicontrol(fig,'Style','text','String','Load Real(Z):','Position',[10 160 70 20]);
-    loadrealField = uicontrol(fig,'Style','edit','Position',[80 160 100 20]);
+    % Left column labels
+    uicontrol(fig, 'Style', 'text', 'String', 'Load Real(Z):', 'Position', [20 160 80 20]);
+    loadrealField = uicontrol(fig, 'Style', 'edit', 'Position', [110 160 120 20]);
 
-    uicontrol(fig,'Style','text','String','Load Imag(Z):','Position',[10 130 70 20]);
-    loadimagField = uicontrol(fig,'Style','edit','Position',[80 130 100 20]);
+    uicontrol(fig, 'Style', 'text', 'String', 'Load Imag(Z):', 'Position', [20 130 80 20]);
+    loadimagField = uicontrol(fig, 'Style', 'edit', 'Position', [110 130 120 20]);
 
-    uicontrol(fig,'Style','text','String','Source Real(Z):','Position',[10 100 70 20]);
-    sourcerealField = uicontrol(fig,'Style','edit','Position',[80 100 100 20]);
+    uicontrol(fig, 'Style', 'text', 'String', 'Source Real(Z):', 'Position', [20 100 100 20]);
+    sourcerealField = uicontrol(fig, 'Style', 'edit', 'Position', [110 100 120 20]);
 
-    uicontrol(fig,'Style','text','String','Source Imag(Z):','Position',[10 70 70 20]);
-    sourceimagField = uicontrol(fig,'Style','edit','Position',[80 70 100 20]);
- 
-    uicontrol(fig,'Style','text','String','Z0 (Ω):','Position',[10 40 70 20]);
-    z0Field = uicontrol(fig,'Style','edit','Position',[80 40 100 20]);
+    uicontrol(fig, 'Style', 'text', 'String', 'Source Imag(Z):', 'Position', [20 70 100 20]);
+    sourceimagField = uicontrol(fig, 'Style', 'edit', 'Position', [110 70 120 20]);
 
-    uicontrol(fig,'Style','text','String','Freq (prefixed):','Position',[10 10 90 20]);
-    freqField = uicontrol(fig,'Style','edit','Position',[100 10 100 20]);
+    uicontrol(fig, 'Style', 'text', 'String', 'Z0 (Ω):', 'Position', [20 40 80 20]);
+    z0Field = uicontrol(fig, 'Style', 'edit', 'Position', [110 40 120 20]);
+
+    uicontrol(fig, 'Style', 'text', 'String', 'Freq :', 'Position', [20 10 80 20]);
+    freqField = uicontrol(fig, 'Style', 'edit', 'Position', [110 10 120 20]);
 
     % Boutton calcul
-    uicontrol(fig,'Style','pushbutton','String','Calculer','Position',[190 140 80 30], ...
+    uicontrol(fig,'Style','pushbutton','String','Calculer','Position',[240 140 80 30], ...
         'Callback', @(~,~) onCompute());
 
     function onCompute()
