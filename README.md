@@ -1,19 +1,21 @@
 # Calculateur d'Adaptation d'Impédance RF
 
-Ce projet permet de calculer et visualiser les réseaux d'adaptation d'impédance en utilisant l'abaque de Smith. Il est implémenté en MATLAB/Octave et fournit une interface graphique simple pour l'utilisateur.
+Ce projet permet de calculer les réseaux d'adaptation d'impédance en L et affiche les résultats sous forme textuelle. Il est implémenté en MATLAB/Octave.
 
 ## Fonctionnalités
 
 - Calcul des réseaux d'adaptation en L (normal et inversé)
-- Visualisation sur l'abaque de Smith
-- Interface graphique interactive
-- Support des préfixes SI pour les fréquences (ex: 2.4G pour 2.4 GHz)
-- Export des résultats en PNG
+- Gestion automatique des cas spéciaux (impédances égales)
+- Support des préfixes SI (G, M, k, m, u, n, p)
+- Calcul du facteur Q optimal
+- Interface graphique pour la saisie des paramètres
+- Identification automatique du meilleur type de réseau
+- Affichage formaté des composants avec leurs valeurs
 
 ## Prérequis
 
 - MATLAB ou GNU Octave
-- Package de base avec support GUI
+- Package de base (pas de dépendances spéciales requises)
 
 ## Installation
 
@@ -35,18 +37,19 @@ impedance_gui
 ```
 
 2. Entrez les paramètres :
-   - Real(Z) : Partie réelle de l'impédance de charge
-   - Imag(Z) : Partie imaginaire de l'impédance de charge
+   - Load Real(Z) : Partie réelle de l'impédance de charge
+   - Load Imag(Z) : Partie imaginaire de l'impédance de charge
+   - Source Real(Z) : Partie réelle de l'impédance source
+   - Source Imag(Z) : Partie imaginaire de l'impédance source
    - Z0 : Impédance caractéristique (typiquement 50Ω)
-
-   - Freq : Fréquence de travail (avec préfixe SI optionnel)
+   - Freq : Fréquence de travail (avec préfixe SI)
 
 3. Cliquez sur "Calculer" pour voir les résultats
 
 Exemples de valeurs :
-- Fréquence : "2.4G" pour 2.4 GHz
-- Impédance : "50" pour 50Ω
-- Impédance complexe : Real=75, Imag=25 pour 75+j25Ω
+- Fréquence : "2.4G" pour 2.4 GHz, "100M" pour 100 MHz
+- Impédances : "50" pour 50Ω
+- Préfixes supportés : G (Giga), M (Mega), k (kilo), m (milli), u (micro), n (nano), p (pico)
 
 ## Structure des fichiers
 
