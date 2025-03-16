@@ -9,33 +9,65 @@
 % @param load_impedance Impédance de charge complexe (Ω)
 % @param z0 Impédance caractéristique (Ω)
 % @param frequency Fréquence de travail (Hz)
-function impedance_matching(source_impedance, load_impedance, z0, frequency)
+% @return results Structure contenant les réseaux calculés (si output est spécifié)
+function [results] = impedance_matching(source_impedance, load_impedance, z0, frequency)
+    % Initialise la chaîne de résultats
+    results_text = '';
+    
+    % Vérification des parties réelles
+    if real(source_impedance) <= 0 || real(load_impedance) <= 0
+        error_msg = "ERREUR: Les parties réelles des impédances doivent être strictement positives pour une adaptation passive classique.\n";
+        printf("%s", error_msg);
+        
+        % Si un argument de sortie est demandé, retourne le message d'erreur
+        if nargout > 0
+            results = error_msg;
+        end
+        return;
+    end
+    
     network_count = 1;
 
     % Affiche l'en-tête
-    printf("\nSource: %s\nLoad: %s\n\n", format_complex(source_impedance), format_complex(load_impedance));
+    header = sprintf("Source: %s\nLoad: %s\n\n", format_complex(source_impedance), format_complex(load_impedance));
+    printf("%s", header);
+    results_text = [results_text, header];
 
     % Calcul des réseaux correspondants
     networks = match_network(source_impedance, load_impedance, frequency);
 
     % Affiche les réseaux de cas égaux
     if isfield(networks, "Equal")
-        printf("L-Network %d:\n", network_count);
+        section = sprintf("L-Network %d:\n", network_count);
+        printf("%s", section);
+        results_text = [results_text, section];
+        
         equal_net = networks.Equal.Values;
         for comp = equal_net
-            printf("  %s\n", format_component_full(comp{1}));
+            comp_str = sprintf("  %s\n", format_component_full(comp{1}));
+            printf("%s", comp_str);
+            results_text = [results_text, comp_str];
         end
-        network_count++;
+        network_count = network_count + 1;
     end
 
     % Affiche les réseaux normaux
     if isfield(networks, "Normal")
         normal_nets = networks.Normal.Values;
         for i = 1:size(normal_nets, 1)
-            printf("L-Network %d:\n", network_count);
-            printf("  %s\n", format_component_full(normal_nets{i,1}));
-            printf("  %s\n", format_component_full(normal_nets{i,2}));
-            network_count++;
+            section = sprintf("L-Network %d:\n", network_count);
+            printf("%s", section);
+            results_text = [results_text, section];
+            
+            comp1 = sprintf("  %s\n", format_component_full(normal_nets{i,1}));
+            printf("%s", comp1);
+            results_text = [results_text, comp1];
+            
+            comp2 = sprintf("  %s\n", format_component_full(normal_nets{i,2}));
+            printf("%s", comp2);
+            results_text = [results_text, comp2];
+            
+            network_count = network_count + 1;
         end
     end
 
@@ -43,14 +75,28 @@ function impedance_matching(source_impedance, load_impedance, z0, frequency)
     if isfield(networks, "Reversed")
         rev_nets = networks.Reversed.Values;
         for i = 1:size(rev_nets, 1)
-            printf("L-Network %d:\n", network_count);
-            printf("  %s\n", format_component_full(rev_nets{i,1}));
-            printf("  %s\n", format_component_full(rev_nets{i,2}));
-            network_count++;
+            section = sprintf("L-Network %d:\n", network_count);
+            printf("%s", section);
+            results_text = [results_text, section];
+            
+            comp1 = sprintf("  %s\n", format_component_full(rev_nets{i,1}));
+            printf("%s", comp1);
+            results_text = [results_text, comp1];
+            
+            comp2 = sprintf("  %s\n", format_component_full(rev_nets{i,2}));
+            printf("%s", comp2);
+            results_text = [results_text, comp2];
+            
+            network_count = network_count + 1;
         end
     end
 
     printf("\n");
+    
+    % Si un argument de sortie est demandé, retourne la chaîne de résultats
+    if nargout > 0
+        results = results_text;
+    end
 end
 
 % @brief Formate un composant électronique pour l'affichage
